@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oásis - Playful Geometric</title>
+    
+    <!-- Google Fonts: Outfit (Headings) & Plus Jakarta Sans (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Feather Icons via CDN -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Canvas Confetti via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#FFFDF5',
+                        foreground: '#1E293B',
+                        muted: '#F1F5F9',
+                        mutedForeground: '#64748B',
+                        accent: '#8B5CF6',
+                        secondary: '#F472B6',
+                        tertiary: '#FBBF24',
+                        quaternary: '#34D399',
+                        border: '#1E293B', // Forced dark for playful geometric style
+                    },
+                    fontFamily: {
+                        heading: ['Outfit', 'system-ui', 'sans-serif'],
+                        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'hard': '4px 4px 0px 0px #1E293B',
+                        'hard-hover': '6px 6px 0px 0px #1E293B',
+                        'hard-active': '2px 2px 0px 0px #1E293B',
+                        'hard-soft': '6px 6px 0px 0px #E2E8F0',
+                        'hard-pink': '8px 8px 0px 0px #F472B6',
+                    },
+                    borderWidth: {
+                        '3': '3px',
+                    },
+                    animation: {
+                        'blob-bounce': 'blobBounce 2s infinite ease-in-out',
+                        'wiggle': 'wiggle 0.3s ease-in-out',
+                        'hard-pulse': 'hardPulse 1.5s infinite',
+                    },
+                    keyframes: {
+                        blobBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '25%': { transform: 'rotate(-3deg) scale(1.02)' },
+                            '75%': { transform: 'rotate(3deg) scale(1.02)' },
+                        },
+                        hardPulse: {
+                            '0%, 100%': { boxShadow: '8px 8px 0px 0px #F472B6', borderColor: '#1E293B' },
+                            '50%': { boxShadow: '12px 12px 0px 0px #EF4444', borderColor: '#EF4444' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FFFDF5;
+            color: #1E293B;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            /* Dot Grid Pattern */
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+
+        h1, h2, h3, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .toast-enter {
+            animation: slideInBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes slideInBounce {
+            from { transform: translateY(-150%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Utility for the candy button transition */
+        .candy-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .sticker-card {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .sticker-card:hover {
+            transform: rotate(-1deg) scale(1.02);
+        }
+        
+        /* Select focus styles */
+        select:focus {
+            box-shadow: 4px 4px 0px 0px #8B5CF6 !important;
+            border-color: #8B5CF6 !important;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="relative min-h-screen flex flex-col">
+        
+        <!-- Tela 1: Login -->
+        <div id="screen-login" class="screen active justify-center items-center p-6 relative overflow-hidden">
+            <!-- Decorative shapes behind -->
+            <div class="absolute top-10 left-10 w-24 h-24 bg-tertiary rounded-full border-2 border-foreground shadow-hard animate-blob-bounce hidden md:block"></div>
+            <div class="absolute bottom-10 right-10 w-32 h-32 bg-secondary rounded-tl-full rounded-br-full rounded-tr-lg rounded-bl-lg border-2 border-foreground shadow-hard animate-blob-bounce" style="animation-delay: 1s;"></div>
+
+            <div class="max-w-md w-full bg-white rounded-2xl border-3 border-foreground shadow-hard p-10 text-center relative z-10">
+                
+                <div class="w-24 h-24 bg-accent text-white rounded-full flex items-center justify-center mx-auto mb-6 border-3 border-foreground shadow-hard transform -rotate-6">
+                    <i data-feather="sun" class="w-12 h-12 stroke-[2.5px]"></i>
+                </div>
+                
+                <h1 class="font-heading text-5xl font-extrabold text-foreground mb-2 tracking-tight">Oásis</h1>
+                <p class="text-mutedForeground mb-10 font-bold text-lg uppercase tracking-widest text-sm">Microclima Escolar</p>
+                
+                <div class="space-y-5">
+                    <button onclick="app.navigateTo('screen-aluno')" class="candy-btn w-full flex items-center justify-between bg-accent text-white border-3 border-foreground py-4 px-6 rounded-full font-heading font-bold text-xl shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                        <div class="flex items-center gap-3">
+                            <i data-feather="user" class="stroke-[3px]"></i> Aluno
+                        </div>
+                        <div class="bg-white rounded-full p-1 text-accent border-2 border-foreground group-hover:rotate-12 transition-transform">
+                            <i data-feather="arrow-right" class="w-5 h-5 stroke-[3px]"></i>
+                        </div>
+                    </button>
+                    
+                    <button onclick="app.navigateTo('screen-coord')" class="candy-btn w-full flex items-center justify-between bg-tertiary text-foreground border-3 border-foreground py-4 px-6 rounded-full font-heading font-bold text-xl shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                        <div class="flex items-center gap-3">
+                            <i data-feather="layout" class="stroke-[3px]"></i> Coordenação
+                        </div>
+                        <div class="bg-white rounded-full p-1 text-tertiary border-2 border-foreground group-hover:rotate-12 transition-transform">
+                            <i data-feather="arrow-right" class="w-5 h-5 text-foreground stroke-[3px]"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 2: Interface do Aluno -->
+        <div id="screen-aluno" class="screen">
+            <!-- Header -->
+            <header class="bg-white px-6 py-4 border-b-3 border-foreground flex items-center justify-between sticky top-0 z-20 shadow-sm">
+                <div class="flex items-center gap-2 text-accent font-heading font-extrabold text-2xl">
+                    <div class="bg-accent text-white p-1.5 rounded-lg border-2 border-foreground">
+                        <i data-feather="sun" class="w-5 h-5 stroke-[3px]"></i>
+                    </div>
+                    Oásis
+                </div>
+                <button onclick="app.navigateTo('screen-login')" class="candy-btn flex items-center gap-2 text-foreground font-bold bg-white border-2 border-foreground shadow-[2px_2px_0px_0px_#1E293B] hover:shadow-[4px_4px_0px_0px_#1E293B] hover:-translate-y-0.5 hover:-translate-x-0.5 active:translate-y-0 active:translate-x-0 active:shadow-none px-4 py-2 rounded-full">
+                    <i data-feather="log-out" class="w-4 h-4 stroke-[3px]"></i> Sair
+                </button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6 sm:p-8 flex flex-col items-center">
+                <div class="max-w-md w-full bg-white rounded-2xl border-3 border-foreground shadow-hard p-6 sm:p-8 relative mt-4">
+                    
+                    <!-- Decorative Badge -->
+                    <div class="absolute -top-5 left-6 bg-quaternary text-foreground font-heading font-extrabold px-4 py-1 border-2 border-foreground rounded-full shadow-hard transform -rotate-3">
+                        Check-in
+                    </div>
+
+                    <div class="text-center mb-8 mt-4">
+                        <h2 class="font-heading text-3xl font-extrabold text-foreground mb-2">Como está sua sala?</h2>
+                        <p class="text-mutedForeground font-medium">Selecione o ambiente e relate a temperatura.</p>
+                    </div>
+
+                    <!-- Seleção de Sala -->
+                    <div class="mb-8">
+                        <label class="block font-heading font-extrabold text-foreground mb-2 uppercase tracking-wide text-sm">Sua Sala de Aula</label>
+                        <div class="relative">
+                            <select id="sala-select" class="w-full appearance-none border-3 border-foreground rounded-xl shadow-[4px_4px_0px_0px_transparent] p-4 bg-muted text-foreground font-bold text-lg outline-none transition-all cursor-pointer">
+                                <!-- Opções injetadas via JS -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-foreground bg-white border-l-3 border-foreground rounded-r-xl">
+                                <i data-feather="chevron-down" class="w-6 h-6 stroke-[3px]"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Sensação Térmica -->
+                    <div class="space-y-4">
+                        <!-- Agradável (Mint) -->
+                        <button onclick="app.registrarClima('Agradável')" class="candy-btn w-full flex items-center justify-between p-4 rounded-2xl border-3 border-foreground bg-quaternary text-foreground shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                            <span class="font-heading font-extrabold text-2xl">Agradável</span>
+                            <div class="bg-white border-2 border-foreground p-2 rounded-full shadow-[2px_2px_0px_0px_#1E293B] group-hover:rotate-12 transition-transform">
+                                <i data-feather="smile" class="w-7 h-7 stroke-[2.5px]"></i>
+                            </div>
+                        </button>
+                        
+                        <!-- Quente (Yellow) -->
+                        <button onclick="app.registrarClima('Quente')" class="candy-btn w-full flex items-center justify-between p-4 rounded-2xl border-3 border-foreground bg-tertiary text-foreground shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                            <span class="font-heading font-extrabold text-2xl">Quente</span>
+                            <div class="bg-white border-2 border-foreground p-2 rounded-full shadow-[2px_2px_0px_0px_#1E293B] group-hover:rotate-12 transition-transform">
+                                <i data-feather="meh" class="w-7 h-7 stroke-[2.5px]"></i>
+                            </div>
+                        </button>
+
+                        <!-- Muito Quente (Orange custom) -->
+                        <button onclick="app.registrarClima('Muito Quente')" class="candy-btn w-full flex items-center justify-between p-4 rounded-2xl border-3 border-foreground bg-orange-400 text-foreground shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                            <span class="font-heading font-extrabold text-2xl">Muito Quente</span>
+                            <div class="bg-white border-2 border-foreground p-2 rounded-full shadow-[2px_2px_0px_0px_#1E293B] group-hover:rotate-12 transition-transform">
+                                <i data-feather="frown" class="w-7 h-7 stroke-[2.5px]"></i>
+                            </div>
+                        </button>
+                        
+                        <!-- Insuportável (Pink/Red) -->
+                        <button onclick="app.registrarClima('Insuportável')" class="candy-btn w-full flex items-center justify-between p-4 rounded-2xl border-3 border-foreground bg-[#EF4444] text-white shadow-hard hover:-translate-y-1 hover:-translate-x-1 hover:shadow-hard-hover active:translate-y-1 active:translate-x-1 active:shadow-hard-active group">
+                            <span class="font-heading font-extrabold text-2xl">Insuportável</span>
+                            <div class="bg-white text-foreground border-2 border-foreground p-2 rounded-full shadow-[2px_2px_0px_0px_#1E293B] group-hover:-rotate-12 group-hover:scale-110 transition-transform">
+                                <i data-feather="alert-triangle" class="w-7 h-7 stroke-[2.5px]"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 3: Dashboard da Coordenação -->
+        <div id="screen-coord" class="screen">
+             <!-- Header -->
+             <header class="bg-white px-6 py-4 border-b-3 border-foreground flex items-center justify-between sticky top-0 z-20 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 text-tertiary font-heading font-extrabold text-2xl">
+                        <div class="bg-tertiary text-foreground p-1.5 rounded-lg border-2 border-foreground">
+                            <i data-feather="layout" class="w-5 h-5 stroke-[3px]"></i>
+                        </div>
+                        Painel
+                    </div>
+                    <div class="hidden sm:flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full border-2 border-foreground shadow-[2px_2px_0px_0px_#1E293B]">
+                        <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-quaternary opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-quaternary border border-foreground"></span>
+                        </span>
+                        <span class="text-xs font-bold text-foreground uppercase tracking-widest">Ativo</span>
+                    </div>
+                </div>
+                <button onclick="app.navigateTo('screen-login')" class="candy-btn flex items-center gap-2 text-foreground font-bold bg-white border-2 border-foreground shadow-[2px_2px_0px_0px_#1E293B] hover:shadow-[4px_4px_0px_0px_#1E293B] hover:-translate-y-0.5 hover:-translate-x-0.5 px-4 py-2 rounded-full">
+                    <i data-feather="log-out" class="w-4 h-4 stroke-[3px]"></i> Sair
+                </button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6 sm:p-10">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                        <div>
+                            <h1 class="font-heading text-4xl font-extrabold text-foreground">Visão Geral</h1>
+                            <p class="text-foreground font-bold mt-2 bg-secondary/20 inline-block px-2 py-1 rounded border border-foreground">Acompanhamento em tempo real</p>
+                        </div>
+                        
+                        <!-- Floating decoration -->
+                        <div class="hidden md:flex items-center gap-2 font-heading font-bold bg-white border-2 border-foreground px-4 py-2 rounded-full shadow-hard transform rotate-2">
+                            <i data-feather="activity" class="text-accent stroke-[3px]"></i> Monitorando 6 salas
+                        </div>
+                    </div>
+
+                    <!-- Grid de Cards do Dashboard -->
+                    <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pt-4">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container para Notificações (Toasts) -->
+        <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-4 w-full max-w-md px-4 pointer-events-none"></div>
+
+    </div>
+
+    <script>
+        const app = {
+            // Estado central da aplicação (dados mockados)
+            state: {
+                salas: [
+                    { id: 1, nome: '1º Ano Informática', status: 'Agradável', ultimaAtualizacao: '10:00' },
+                    { id: 2, nome: '2º Ano Administração', status: 'Insuportável', ultimaAtualizacao: '10:05' },
+                    { id: 3, nome: '3º Ano Enfermagem', status: 'Quente', ultimaAtualizacao: '10:25' },
+                    { id: 4, nome: '1º Ano Edificações', status: 'Muito Quente', ultimaAtualizacao: '10:12' },
+                    { id: 5, nome: 'Biblioteca', status: 'Agradável', ultimaAtualizacao: '09:30' },
+                    { id: 6, nome: 'Lab. de Ciências', status: 'Quente', ultimaAtualizacao: '09:50' }
+                ]
+            },
+
+            // Função para alternar telas
+            navigateTo: function(screenId) {
+                const screens = document.querySelectorAll('.screen');
+                const targetScreen = document.getElementById(screenId);
+                
+                if (!targetScreen) return;
+
+                screens.forEach(screen => screen.classList.remove('active'));
+                targetScreen.classList.add('active');
+                
+                if (screenId === 'screen-dashboard' || screenId === 'screen-coord') {
+                    this.renderDashboard();
+                } else if (screenId === 'screen-aluno') {
+                    this.popularSelectSalas();
+                }
+                
+                feather.replace();
+                window.scrollTo(0, 0);
+            },
+
+            // Preenche o <select> do aluno
+            popularSelectSalas: function() {
+                const select = document.getElementById('sala-select');
+                select.innerHTML = '';
+                
+                this.state.salas.forEach(sala => {
+                    const option = document.createElement('option');
+                    option.value = sala.id;
+                    option.textContent = sala.nome;
+                    select.appendChild(option);
+                });
+            },
+
+            // Função chamada quando o aluno clica em uma temperatura
+            registrarClima: function(temperatura) {
+                const selectElement = document.getElementById('sala-select');
+                const salaId = parseInt(selectElement.value);
+                const salaIndex = this.state.salas.findIndex(s => s.id === salaId);
+
+                if(salaIndex !== -1) {
+                    this.state.salas[salaIndex].status = temperatura;
+                    
+                    const agora = new Date();
+                    const horas = String(agora.getHours()).padStart(2, '0');
+                    const min = String(agora.getMinutes()).padStart(2, '0');
+                    this.state.salas[salaIndex].ultimaAtualizacao = `${horas}:${min}`;
+
+                    this.dispararConfete();
+
+                    const nomeSala = this.state.salas[salaIndex].nome;
+                    this.showToast(`Relato recebido! A coordenação foi notificada sobre a ${nomeSala}.`, 'success');
+
+                    this.renderDashboard();
+                    
+                    setTimeout(() => {
+                        this.navigateTo('screen-login');
+                    }, 2500); 
+                }
+            },
+
+            // Confetes adaptados para a paleta Playful Geometric
+            dispararConfete: function() {
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 150,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399', '#1E293B'],
+                        shapes: ['circle', 'square'] // Geometric shapes
+                    });
+                }
+            },
+
+            // Renderiza os cards estilo "Sticker"
+            renderDashboard: function() {
+                const grid = document.getElementById('dashboard-grid');
+                grid.innerHTML = ''; 
+
+                this.state.salas.forEach(sala => {
+                    let colorConfig = {};
+                    let isCritical = false;
+
+                    // Adaptação das cores para o sistema Playful Geometric
+                    switch (sala.status) {
+                        case 'Agradável':
+                            colorConfig = { 
+                                bg: 'bg-white', 
+                                badge: 'bg-quaternary text-foreground', 
+                                icon: 'smile', iconBg: 'bg-quaternary' 
+                            };
+                            break;
+                        case 'Quente':
+                            colorConfig = { 
+                                bg: 'bg-white', 
+                                badge: 'bg-tertiary text-foreground', 
+                                icon: 'meh', iconBg: 'bg-tertiary' 
+                            };
+                            break;
+                        case 'Muito Quente':
+                            isCritical = true;
+                            colorConfig = { 
+                                bg: 'bg-orange-50', 
+                                badge: 'bg-orange-400 text-foreground', 
+                                icon: 'frown', iconBg: 'bg-orange-400' 
+                            };
+                            break;
+                        case 'Insuportável':
+                            isCritical = true;
+                            colorConfig = { 
+                                bg: 'bg-pink-50', 
+                                badge: 'bg-[#EF4444] text-white', 
+                                icon: 'alert-triangle', iconBg: 'bg-[#EF4444] text-white' 
+                            };
+                            break;
+                    }
+
+                    const animationClass = isCritical ? 'animate-hard-pulse' : 'shadow-hard-soft';
+                    
+                    // The Candy Button para ação
+                    const actionButton = isCritical ? `
+                        <div class="mt-6 pt-5 border-t-3 border-foreground border-dashed">
+                            <button onclick="app.ativarProtocolo(${sala.id})" class="candy-btn w-full bg-accent text-white py-3 px-4 rounded-full font-heading font-extrabold text-lg border-2 border-foreground shadow-[4px_4px_0px_0px_#1E293B] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#1E293B] active:translate-y-1 active:translate-x-1 active:shadow-[2px_2px_0px_0px_#1E293B] flex justify-center items-center gap-2">
+                                <i data-feather="wind" class="w-5 h-5 stroke-[3px]"></i>
+                                Ativar Protocolo
+                            </button>
+                        </div>
+                    ` : '';
+
+                    // Constrói o HTML do Card "Sticker"
+                    const cardHTML = `
+                        <div class="${colorConfig.bg} sticker-card border-3 border-foreground rounded-2xl p-6 relative ${animationClass} flex flex-col h-full mt-4">
+                            
+                            <!-- Floating Icon Badge -->
+                            <div class="absolute -top-6 -right-2 w-14 h-14 ${colorConfig.iconBg} border-3 border-foreground rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#1E293B] transform rotate-3">
+                                <i data-feather="${colorConfig.icon}" class="w-7 h-7 stroke-[2.5px]"></i>
+                            </div>
+
+                            <div class="mb-4 pr-10">
+                                <h3 class="font-heading text-2xl font-extrabold text-foreground leading-tight">${sala.nome}</h3>
+                                <p class="text-xs font-bold text-foreground mt-2 flex items-center gap-1 bg-muted inline-flex px-2 py-1 rounded border border-foreground">
+                                    <i data-feather="clock" class="w-3 h-3 stroke-[3px]"></i> ${sala.ultimaAtualizacao}
+                                </p>
+                            </div>
+                            
+                            <div class="mt-auto pt-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-foreground ${colorConfig.badge} font-bold text-sm tracking-wide uppercase">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-current border border-white/50"></span>
+                                    </span>
+                                    ${sala.status}
+                                </div>
+                            </div>
+                            
+                            ${actionButton}
+                        </div>
+                    `;
+                    
+                    grid.insertAdjacentHTML('beforeend', cardHTML);
+                });
+
+                feather.replace();
+            },
+
+            // Ação do coordenador no dashboard
+            ativarProtocolo: function(salaId) {
+                const sala = this.state.salas.find(s => s.id === salaId);
+                if(sala) {
+                    sala.status = 'Agradável'; 
+                    this.showToast(`Sucesso! Protocolo ativado para ${sala.nome}.`, 'success');
+                    this.renderDashboard();
+                }
+            },
+
+            // Toasts estilo adesivo
+            showToast: function(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                let colorClass = 'bg-accent text-white';
+                let iconName = 'info';
+
+                if (type === 'success') {
+                    colorClass = 'bg-quaternary text-foreground';
+                    iconName = 'check-circle';
+                }
+
+                toast.className = `${colorClass} px-5 py-4 rounded-xl border-3 border-foreground shadow-hard font-bold text-base flex items-center gap-3 toast-enter pointer-events-auto transform rotate-1`;
+                toast.innerHTML = `
+                    <div class="bg-white rounded-full p-1 border-2 border-foreground shrink-0 text-foreground">
+                        <i data-feather="${iconName}" class="w-5 h-5 stroke-[3px]"></i> 
+                    </div>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                feather.replace();
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-20px) scale(0.9)';
+                    toast.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            },
+
+            // Inicialização
+            init: function() {
+                feather.replace();
+                this.navigateTo('screen-login');
+                this.popularSelectSalas();
+            }
+        };
+
+        // Inicia o app quando o DOM carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
